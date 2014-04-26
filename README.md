@@ -12,9 +12,9 @@ Example
     >>> import binmsg
     >>> import binmsg
     >>> defs = [
-            {'name': 'type', 'struct': binmsg.Struct('!b')},
-            {'name': 'name', 'struct': binmsg.StringStruct()},
-            {'name': 'age', 'struct': binmsg.Struct('!I')},
+            {'name': 'type', 'struct': binmsg.uchar()},
+            {'name': 'name', 'struct': binmsg.string()},
+            {'name': 'age', 'struct': binmsg.uint()},
         ]
     >>> binmsg = binmsg.BinMsg(definitions=defs)
     >>> msg = {'type': 1, 'name': 'Test', 'age': 20}
