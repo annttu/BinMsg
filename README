@@ -3,6 +3,8 @@
 
 BinMsg is simple library to make a binary message protocol easily.
 
+Currently library supports python >= 2.7
+
 @section{Usage}
 
 Example::
@@ -17,7 +19,7 @@ Example::
     >>> msg = {'type': 1, 'name': 'Test', 'age': 20}
     >>> out = b.pack(msg)
     >>> out
-    '\x01\x04Test\x00\x00\x00\x14'
+    '\x01\x00\x00\x00\x04Test\x00\x00\x00\x14'
     >>> b.unpack(out)
     {'age': 20, 'type': 1, 'name': 'Test'}
 

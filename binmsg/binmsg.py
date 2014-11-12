@@ -85,9 +85,25 @@ class Char(BinStruct):
     Char is one ascii character with numeric value from -127 to 128
     """
     _format = '!c'
-    _type = str
-    _min = '\0'
-    _max = '\256'
+    if python3:
+        _type = bytes
+        _min = b'\0'
+        _max = b'\256'
+    else:
+        _type = str
+        _min = '\0'
+        _max = '\256'
+
+    def unpack(self, string):
+        if python3:
+            return self.struct.unpack(string)[0].decode("utf-8")
+        return self.struct.unpack(string)
+
+    def pack(self, string):
+        if python3:
+            if type(string) != bytes:
+                string = bytearray(string, "utf-8")
+        return self.struct.pack(string)
 
 char = Char
 
@@ -177,7 +193,17 @@ class String(BinStruct):
         """
         if len(msg) != self.custom_size:
             raise CannotPack("Got message with wrong length!")
-        return ''.join([chr(unpack('!B', msg[i])[0]) for i in range(self.custom_size)])
+        #x = []
+        #if python3:
+        #    # Convert to bytes
+        #    #for i in range(len(msg)):
+        #    #    x.append(chr(msg[i]).encode("utf-8"))
+        #    #msg = x
+        #    return msg.decode("utf-8")
+        if python3:
+            return msg.decode("utf-8")
+        s = [chr(unpack('!B', msg[i])[0]) for i in range(self.custom_size)]
+        return ''.join(s)
 
     def pack(self, msg):
         """
@@ -186,9 +212,12 @@ class String(BinStruct):
         if not python3:
             if type(msg) == unicode:
                 msg = msg.encode("utf-8")
+        else:
+            msg = bytearray(msg, 'utf-8')
         st = self.size_struct.pack(len(msg))
-        st += b''.join([pack('!B', ord(msg[i])) for i in range(len(msg))])
-        return st
+        return st + msg
+        #st += b''.join([pack('!B', ord(msg[i])) for i in range(len(msg))])
+        #return st
 
 
 
@@ -253,7 +282,7 @@ class ValueIs(Condition):
     def __init__(self, field, value, condition='=='):
         """
         field: name of field to check
-        value: value to compare value. 
+        value: value to compare value.
         condition: condition between field value and given value.
         """
         self.field = field
