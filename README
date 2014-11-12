@@ -1,37 +1,32 @@
-BinMsg
-======
+@section{BinMsg}
+
 
 BinMsg is simple library to make a binary message protocol easily.
 
+@section{Usage}
 
-Usage
-=====
+Example::
 
-Example
-
-    >>> import binmsg
     >>> import binmsg
     >>> defs = [
             {'name': 'type', 'struct': binmsg.uchar()},
             {'name': 'name', 'struct': binmsg.string()},
             {'name': 'age', 'struct': binmsg.uint()},
         ]
-    >>> binmsg = binmsg.BinMsg(definitions=defs)
+    >>> b = binmsg.BinMsg(definitions=defs)
     >>> msg = {'type': 1, 'name': 'Test', 'age': 20}
-    >>> out = binmsg.pack(msg)
+    >>> out = b.pack(msg)
     >>> out
     '\x01\x04Test\x00\x00\x00\x14'
-    >>> binmsg.unpack(out)
+    >>> b.unpack(out)
     {'age': 20, 'type': 1, 'name': 'Test'}
-    
 
-Author
-======
+
+@section{Author}
 
 * Antti 'Annttu' Jaakkola
 
-License
-=======
+@section{License}
 
 The MIT License (MIT)
 

@@ -2,9 +2,16 @@
 
 from struct import Struct as SStruct, unpack, pack
 import logging
+import sys
 
 
-logger = logging.getLogger('BinMsg' )
+logger = logging.getLogger('BinMsg')
+
+python3 = False
+if sys.version_info>(3,0,0):
+    python3 = True
+    # There isn't long on python3 anymore
+    long = int
 
 class BinMsgException(Exception):
     pass
@@ -26,10 +33,19 @@ class BinStruct(object):
 
     def __init__(self):
         self.struct = SStruct(self._format)
+        self._custom_size = None
 
     @property
     def size(self):
         return self.struct.size
+
+    @property
+    def custom_size(self):
+        return self._custom_size
+
+    @custom_size.setter
+    def custom_size(self, value):
+        self._custom_size = value
 
     def unpack(self, string):
         return self.struct.unpack(string)
@@ -88,7 +104,7 @@ integer = Integer
 
 class UnsignedInteger(BinStruct):
     """
-    Unsigned Integer is number with value from 0 to 4294967296 
+    Unsigned Integer is number with value from 0 to 4294967296
     """
     _format = '!I'
     _type = int
@@ -147,34 +163,32 @@ class String(BinStruct):
     """
     _type = str
 
-    def __init__(self, length_format='!B'):
+    def __init__(self, length_format='!I'):
+        self.length_format = length_format
         self.size_struct = SStruct(length_format)
-        self._size = None
 
     @property
     def size(self):
-        if self._size is not None:
-            return self._size
         raise SizeNotDefined()
-
-    @size.setter
-    def size(self, value):
-        self._size = value
 
     def unpack(self, msg):
         """
         Unpack string, little ugly but works
         """
-        if len(msg) != self.size:
+        if len(msg) != self.custom_size:
             raise CannotPack("Got message with wrong length!")
-        return (''.join([unpack('!c', msg[i])[0] for i in range(self.size)]),)
+        return ''.join([chr(unpack('!B', msg[i])[0]) for i in range(self.custom_size)])
 
     def pack(self, msg):
         """
         Pack string with length
         """
-        return self.size_struct.pack(len(msg)) + \
-                        ''.join([pack('!c', msg[i]) for i in range(len(msg))])
+        if not python3:
+            if type(msg) == unicode:
+                msg = msg.encode("utf-8")
+        st = self.size_struct.pack(len(msg))
+        st += b''.join([pack('!B', ord(msg[i])) for i in range(len(msg))])
+        return st
 
 
 
@@ -199,7 +213,7 @@ class Condition(object):
             return c(*args, **kwargs) or other.check(*args, **kwargs)
         self.check = f
         return self
-        
+
     def __and__(self, other):
         c = self.check
         def f(*args, **kwargs):
@@ -280,7 +294,7 @@ string = String
 """
 'name': string,
 'type': Struct,
-'condition': Condition1 & Condition2 
+'condition': Condition1 & Condition2
 """
 
 class BinMsg(object):
@@ -329,7 +343,7 @@ class BinMsg(object):
                          "Value %s for field %s is too big, maximum is %s" % (
                                      value, definition['name'], struct._max))
             output.append(struct.pack(value))
-        return ''.join(output)
+        return b''.join(output)
 
     def unpack(self, msg):
         """
@@ -344,7 +358,7 @@ class BinMsg(object):
             if 'condition' in output:
                 if not condition.check(output):
                     continue
-            struct = definition['struct'] 
+            struct = definition['struct']
             try:
                 size = struct.size
             except SizeNotDefined:
@@ -352,11 +366,11 @@ class BinMsg(object):
                     size_msg = msg[:struct.size_struct.size]
                     msg = msg[struct.size_struct.size:]
                     size = struct.size_struct.unpack(size_msg)[0]
-                    struct.size = size
+                    struct.custom_size = size
                 except Exception as e:
                     logger.exception(e)
             if not size:
-                raise CannotUnpack("Cannot get size of element %s" % 
+                raise CannotUnpack("Cannot get size of element %s" %
                                                             definition['name'])
             m = msg[:size]
             msg = msg[size:]

@@ -12,6 +12,10 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 logging.basicConfig()
 
+"""
+TODO: test conditions
+"""
+
 class TestBasic(unittest.TestCase):
     def setUp(self):
         defs = [
@@ -22,7 +26,7 @@ class TestBasic(unittest.TestCase):
         self.binmsg = binmsg.BinMsg(definitions=defs)
 
     def test_unpack(self):
-        msg = struct.pack('!bbccccI', 1, 4, 'T', 'e', 's', 't', 20)
+        msg = struct.pack('!bIccccI', 1, 4, 'T', 'e', 's', 't', 20)
         out = self.binmsg.unpack(msg)
         self.assertEquals(out['type'], 1, "Type should be 1")
         self.assertEquals(out['name'], 'Test', "Name should be 'Test'")
@@ -31,19 +35,21 @@ class TestBasic(unittest.TestCase):
     def test_pack(self):
         msg = {'type': 1, 'name': 'Test', 'age': 20}
         out = self.binmsg.pack(msg)
-        x = struct.unpack('!bbccccI', out)
+        x = struct.unpack('!bIccccI', out)
         (_type, name_length, name, age) = (x[0], x[1], ''.join(x[2:6]), x[6])
         self.assertEquals(_type, 1, "Type should be 1")
         self.assertEquals(name_length, 4, "name length should be 4")
         self.assertEquals(name, 'Test', "Name should be 'Test'")
         self.assertEquals(age, 20, "Age should be 20")
- 
+
     def test_both(self):
         msg = {'type': 1, 'name': 'Test', 'age': 20}
-        out = self.binmsg.unpack(self.binmsg.pack(msg))
+        x = self.binmsg.pack(msg)
+        out = self.binmsg.unpack(x)
         self.assertEquals(out['type'], 1, "Type should be 1")
         self.assertEquals(out['name'], 'Test', "Name should be 'Test'")
         self.assertEquals(out['age'], 20, "Age should be 20")
+
 
 class TestTypes(unittest.TestCase):
     def test_unsignedinteger(self):
@@ -114,6 +120,19 @@ class TestTypes(unittest.TestCase):
                                                   "Wrong value for packed char")
         out = b.unpack(out)
         self.assertEquals(out['char'], 'z', "Wrong value for char")
+
+    def test_string(self):
+        defs = [{'name': 'string', 'struct': binmsg.string()},]
+        b = binmsg.BinMsg(definitions=defs)
+        out = b.pack({'string': 'test abc 123 ?*= abc abc test test test'})
+        out = b.unpack(out)
+        self.assertEquals(out['string'], 'test abc 123 ?*= abc abc test test test', "Wrong value for string %s" % out['string'])
+        out = b.pack({'string': 'unicode chars ä í ☃'})
+        out = b.unpack(out)
+        self.assertEquals(out['string'], 'unicode chars ä í ☃', "Wrong value for string %s" % (out['string'],))
+        out = b.pack({'string': '☃☃☃☃☃☃'})
+        out = b.unpack(out)
+        self.assertEquals(out['string'], '☃☃☃☃☃☃', "Wrong value for string %s" % (out['string'],))
 
     def test_biginteger(self):
         defs = [{'name': 'number', 'struct': binmsg.BigInteger()},]
