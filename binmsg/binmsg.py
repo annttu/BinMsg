@@ -255,7 +255,7 @@ class Contains(Condition):
     """
     Value existence check.
     """
-    def __init__(self, field, neagtion = False):
+    def __init__(self, field, negation = False):
         """
         Initialize Checker class
 
@@ -304,17 +304,17 @@ class ValueIs(Condition):
         if self.field not in output:
             return False
         value = output[self.field]
-        if condition == '==':
+        if self.condition == '==':
             return value == self.value
-        elif condition == '!=':
+        elif self.condition == '!=':
             return value != self.value
-        elif condition == '>=':
+        elif self.condition == '>=':
             return value >= self.value
-        elif condition == '<=':
+        elif self.condition == '<=':
             return value <= self.value
-        elif condition == '>':
+        elif self.condition == '>':
             return value > self.value
-        elif condition == '<':
+        elif self.condition == '<':
             return value < self.value
         return False
 
@@ -364,6 +364,12 @@ class BinMsg(object):
             raise ValueError("Msg should be dict!")
         output = []
         for definition in self.definitions:
+            if 'condition' in definition:
+                if definition['condition'].check(msg) is False:
+                    if definition['name'] in msg:
+                        raise CannotPack("field %s not expected in messsage" % definition['name'])
+                    else:
+                        continue
             if definition['name'] not in msg:
                 raise CannotPack("value for key %s not found from message" % (
                                  definition['name']))

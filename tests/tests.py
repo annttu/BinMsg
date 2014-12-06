@@ -212,5 +212,39 @@ class TestTypes(unittest.TestCase):
         else:
             self.fail("Invalid type should raise CannotPack error")
 
+
+class TestConditions(unittest.TestCase):
+    def test_contains(self):
+        defs = [{'name': 'type', 'struct': binmsg.uchar()},
+                {'name': 'number', 'struct': binmsg.Double(), 'condition': binmsg.Contains('nonexist')},
+                {'name': 'string', 'struct': binmsg.String(), 'condition': binmsg.Contains('type')},
+                ]
+        b = binmsg.BinMsg(definitions=defs)
+        msg = {'type': 3, 'string': 'asdf'}
+        b.pack(msg)
+        msg = {'type': 3, 'number': 3.4, 'string': 'asdf'}
+        try:
+            b.pack(msg)
+            self.fail("Contains should filter field with false condition")
+        except binmsg.CannotPack:
+            pass
+
+    def test_valueis(self):
+        defs = [{'name': 'type', 'struct': binmsg.uchar()},
+                {'name': 'number', 'struct': binmsg.Double(), 'condition': binmsg.ValueIs('type', 3)},
+                {'name': 'string', 'struct': binmsg.String(), 'condition': binmsg.ValueIs('type', 2)},
+                ]
+        b = binmsg.BinMsg(definitions=defs)
+        msg = {'type': 2, 'string': 'asdf'}
+        b.pack(msg)
+        msg = {'type': 3, 'number': 3.4}
+        b.pack(msg)
+        msg = {'type': 3, 'number': 3.4, 'string': 'asdf'}
+        try:
+            b.pack(msg)
+            self.fail("Contains should filter field with ValueIs condition which expands to False")
+        except binmsg.CannotPack:
+            pass
+
 if __name__ == '__main__':
     unittest.main()
