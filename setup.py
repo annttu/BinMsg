@@ -8,7 +8,7 @@ with open('README', encoding='utf-8') as f:
 
 
 setup(name='binmsg',
-      version='0.1',
+      version='0.2',
       description="Binary messaging library",
       long_description=long_description,
       classifiers=[],
