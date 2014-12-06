@@ -335,6 +335,7 @@ class BinMsg(object):
             if 'struct' not in v:
                 raise ValueError("Struct is mandatory argument!")
             self.definitions.append(v)
+        self.size_format = SStruct('!I')
 
     def pack(self, msg):
         """
@@ -372,7 +373,8 @@ class BinMsg(object):
                          "Value %s for field %s is too big, maximum is %s" % (
                                      value, definition['name'], struct._max))
             output.append(struct.pack(value))
-        return b''.join(output)
+        output = b''.join(output)
+        return self.size_format.pack(len(output)) + output
 
     def unpack(self, msg):
         """
@@ -381,6 +383,15 @@ class BinMsg(object):
         Returns message dictionary.
         """
         output = {}
+        if len(msg) < self.size_format.size:
+            raise CannotUnpack("Message size is shorter than length field")
+        l = self.size_format.unpack(msg[:self.size_format.size])
+        l = int(l[0])
+        msg = msg[self.size_format.size:]
+        if len(msg) < l:
+            raise CannotUnpack("Message is %d bytes shorter than expected" % (l - len(msg),))
+        elif len(msg) > l:
+            raise CannotUnpack("Message is %d bytes longer than expected" % (len(msg) - l,))
         for definition in self.definitions:
             if definition['name'] in output:
                 continue
