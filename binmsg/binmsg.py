@@ -320,11 +320,6 @@ class ValueIs(Condition):
 
 string = String
 
-"""
-'name': string,
-'type': Struct,
-'condition': Condition1 & Condition2
-"""
 
 class BinMsg(object):
     def __init__(self, definitions):
@@ -352,6 +347,11 @@ class BinMsg(object):
             raise CannotUnpack("Length message is too long")
         return int(self.size_format.unpack(msg)[0])
 
+    def pack_length(self, length):
+        """
+        Pack length integer
+        """
+        return self.size_format.pack(length)
 
 
     def pack(self, msg):
@@ -417,8 +417,8 @@ class BinMsg(object):
         for definition in self.definitions:
             if definition['name'] in output:
                 continue
-            if 'condition' in output:
-                if not condition.check(output):
+            if 'condition' in definition:
+                if not definition['condition'].check(output):
                     continue
             struct = definition['struct']
             try:
