@@ -337,6 +337,23 @@ class BinMsg(object):
             self.definitions.append(v)
         self.size_format = SStruct('!I')
 
+    @property
+    def size_length(self):
+        return self.size_format.size
+
+    def unpack_length(self, msg):
+        """
+        Unpack given length message and return length value.
+        Raises CannotUnpack if given msg length is not correct.
+        """
+        if len(msg) < self.size_length:
+            raise CannotUnpack("Length message is too short")
+        elif len(msg) > self.size_length:
+            raise CannotUnpack("Length message is too long")
+        return int(self.size_format.unpack(msg)[0])
+
+
+
     def pack(self, msg):
         """
         Pack given message (dict) to binary message using predefined fields.
@@ -385,9 +402,8 @@ class BinMsg(object):
         output = {}
         if len(msg) < self.size_format.size:
             raise CannotUnpack("Message size is shorter than length field")
-        l = self.size_format.unpack(msg[:self.size_format.size])
-        l = int(l[0])
-        msg = msg[self.size_format.size:]
+        l = self.unpack_length(msg[:self.size_length])
+        msg = msg[self.size_length:]
         if len(msg) < l:
             raise CannotUnpack("Message is %d bytes shorter than expected" % (l - len(msg),))
         elif len(msg) > l:
