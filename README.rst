@@ -1,4 +1,6 @@
-@section{BinMsg}
+=======
+BinMsg
+=======
 
 .. image:: https://drone.io/github.com/annttu/BinMsg/status.png
 
@@ -6,7 +8,8 @@ BinMsg is simple library to make a binary message protocol easily.
 
 Currently library supports python >= 2.7
 
-@section{Usage}
+Usage
+------
 
 Example::
 
@@ -25,11 +28,13 @@ Example::
     {'age': 20, 'type': 1, 'name': 'Test'}
 
 
-@section{Author}
+Author
+------
 
 * Antti 'Annttu' Jaakkola
 
-@section{License}
+License
+-------
 
 The MIT License (MIT)
 
