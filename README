@@ -1,5 +1,6 @@
 @section{BinMsg}
 
+.. image:: https://drone.io/github.com/annttu/BinMsg/status.png
 
 BinMsg is simple library to make a binary message protocol easily.
 
